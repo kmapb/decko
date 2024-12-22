@@ -84,9 +84,14 @@ class MTGProxyGenerator:
                 response = requests.get(image_url)
                 img = Image.open(BytesIO(response.content))
                 
-                # Calculate position
-                x = self.MARGIN + (current_col * scaled_width)
-                y = self.PAGE_HEIGHT - self.MARGIN - ((current_row + 1) * scaled_height)
+                # Centered margins
+                centered_width = (self.PAGE_WIDTH - scaled_width * cards_per_row) / 2
+                centered_height = (self.PAGE_HEIGHT - scaled_height * cards_per_column) / 2
+                assert centered_width >= self.MARGIN
+                assert centered_height >= self.MARGIN
+                # Calculate position. Instead of hardcoding margin, center it
+                x = centered_width + (current_col * scaled_width)
+                y = self.PAGE_HEIGHT - centered_height - ((current_row + 1) * scaled_height)
 
                 # Add image to PDF
                 c.drawImage(ImageReader(img), x, y, width=scaled_width, height=scaled_height)
@@ -111,6 +116,11 @@ generator = MTGProxyGenerator()
 
 # Example decklist
 decklist = """
+2 Mountain
+2 Swamp
+2 Island
+2 Murder of Crows
+2 Thieving Magpie
 1 search for azcanta // azcanta, the sunken ruin
 """
 

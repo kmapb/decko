@@ -7,6 +7,8 @@ from reportlab.lib.utils import ImageReader
 from io import BytesIO
 import math
 import sys
+import click
+
 
 class MTGProxyGenerator:
     def __init__(self, scale_factor=0.95, margin = 0.5):
@@ -33,8 +35,7 @@ class MTGProxyGenerator:
                 match = re.match(r'^(.*)\s+(\([A-Z0-9]*\)\s+[0-9]*)$', card_name)
                 if match:
                     card_name = match.group(1)
-                    if True:
-                        print(f'stripped out {match.group(2)}');
+                    logging.info(f'stripped out {match.group(2)}');
                 cards.extend([card_name] * count)
         
         return cards
@@ -111,21 +112,18 @@ class MTGProxyGenerator:
 
         c.save()
 
-# Example usage
-generator = MTGProxyGenerator()
 
-# Example decklist
-decklist = """
-2 Mountain
-2 Swamp
-2 Island
-2 Murder of Crows
-2 Thieving Magpie
-1 search for azcanta // azcanta, the sunken ruin
-"""
+@click.command("decko")
+@click.version_option("0.1.0", prog_name="decko")
+@click.option('-s', '--scale', type=click.FLOAT, default=0.95)
+@click.option('-o', '--output', type=click.Path(), default="proxies.pdf")
+@click.argument("input_file",
+        type=click.File(mode="r"))
+def main(input_file, scale, output):
+    decklist = input_file.read()
+    # Example usage
+    MTGProxyGenerator(scale_factor=scale).create_proxy_pdf(decklist, output)
 
-if len(sys.argv) > 1:
-    with open(sys.argv[1], 'r') as f:
-        decklist = f.read()
+if __name__ == "__main__":
+    main()
 
-generator.create_proxy_pdf(decklist, "proxies.pdf")

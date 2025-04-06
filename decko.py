@@ -9,6 +9,14 @@ import math
 import sys
 import click
 
+def configure_logging(debug: bool):
+    """Configure logging based on debug flag"""
+    level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
 class MTGProxyGenerator:
     def __init__(self, scale_factor=0.95, margin = 0.5):
@@ -32,7 +40,7 @@ class MTGProxyGenerator:
                 count = int(match.group(1))
                 card_name = match.group(2)
                 # strip out trailing set info from, e.g., manabox output
-                match = re.match(r'^(.*)\s+(\([A-Z0-9]*\)\s+[0-9]*)$', card_name)
+                match = re.match(r'^(.*)\s+(\([A-Z0-9]*\)\s+[A-Z0-9\-]*)$', card_name)
                 if match:
                     card_name = match.group(1)
                     logging.info(f'stripped out {match.group(2)}');
@@ -52,6 +60,7 @@ class MTGProxyGenerator:
                 return [normal_image]
             if card_data.get('card_faces') is not None:
                 return [x.get('image_uris', {}).get('border_crop') for x in card_data['card_faces']]
+        import pdb; pdb.set_trace()
         return None
 
     def create_proxy_pdf(self, decklist, output_filename):
@@ -117,9 +126,11 @@ class MTGProxyGenerator:
 @click.version_option("0.1.0", prog_name="decko")
 @click.option('-s', '--scale', type=click.FLOAT, default=0.95)
 @click.option('-o', '--output', type=click.Path(), default="proxies.pdf")
+@click.option('--debug', is_flag=True, help="Enable debug logging")
 @click.argument("input_file",
         type=click.File(mode="r"))
-def main(input_file, scale, output):
+def main(input_file, scale, output, debug):
+    configure_logging(debug)
     decklist = input_file.read()
     # Example usage
     MTGProxyGenerator(scale_factor=scale).create_proxy_pdf(decklist, output)
